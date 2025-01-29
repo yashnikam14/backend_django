@@ -4,6 +4,7 @@ import os
 import random
 import csv
 from datetime import datetime
+import traceback
 
 
 folder_path = os.path.join(os.getcwd(), 'data_files')
@@ -48,7 +49,8 @@ class Command(BaseCommand):
             log_into_file({"function": "handle", "completed": True})
 
         except Exception as e:
-            log_into_file({"function": "handle", "exception": str(e)})
+            log_into_file({"function": "handle", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
 
 
 class DataGenerator:
@@ -74,5 +76,6 @@ class DataGenerator:
             return students
 
         except Exception as e:
-            log_into_file({"function": "generate_student_data", "exception": str(e)})
+            log_into_file({"function": "generate_student_data", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
 

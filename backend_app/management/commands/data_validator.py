@@ -7,6 +7,7 @@ import os
 import json
 from backend_app.models import MarkSheet
 from django.utils import timezone
+import traceback
 
 folder_path = os.path.join(os.getcwd(), 'data_files')
 
@@ -25,7 +26,8 @@ class Command(BaseCommand):
             log_into_file({"function": "handle", "completed": True})
 
         except Exception as e:
-            log_into_file({"function": "handle", "exception": str(e)})
+            log_into_file({"function": "handle", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
 
 
 class DataValidator:
@@ -54,5 +56,6 @@ class DataValidator:
             log_into_file({"function": "handle_data", "completed": True})
 
         except Exception as e:
-            log_into_file({"function": "handle_data", "exception": str(e)})
+            log_into_file({"function": "handle_data", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
 

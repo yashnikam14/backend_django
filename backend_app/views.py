@@ -7,19 +7,21 @@ from utils.handle_response import api_response, api_exception
 from rest_framework import status as st
 from .models import UserToken, UserDetails, UserTypes, UserMapping
 from django.db.models import Q
-
+import traceback
 
 class BaseAPI(viewsets.ViewSet):
     def list(self, request, *args, **kwargs):
         try:
             auth_header = request.headers.get('Authorization', None)
             auth_message, user = validate_token(auth_header)
+            print(1/0)
             if len(auth_message):
                 return api_response('fail', auth_message, [],st.HTTP_403_FORBIDDEN)
             log_into_file({"function": "BaseAPI", "started": True})
             return api_response("success", "hello yash", [], st.HTTP_200_OK)
         except Exception as e:
-            log_into_file({"function": "BaseAPI", "exception": str(e)})
+            log_into_file({"function": "BaseAPI", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
 
 
@@ -103,7 +105,8 @@ class CreateUpdateUserAPI(viewsets.ViewSet):
             return api_response(status, message, response_object, status_code)
 
         except Exception as e:
-            log_into_file({"function": "CreateUpdateUserAPI", "exception": str(e)})
+            log_into_file({"function": "CreateUpdateUserAPI", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
 
 
@@ -147,7 +150,8 @@ class UserDetailsPI(viewsets.ViewSet):
             return api_response(status, message, response_object, status_code)
 
         except Exception as e:
-            log_into_file({"function": "UserDetailsPI", "exception": str(e)})
+            log_into_file({"function": "UserDetailsPI", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
 
 
@@ -189,5 +193,6 @@ class UserLoginAPI(viewsets.ViewSet):
             log_into_file({"function": "UserLoginAPI", "completed": True})
             return api_response(status, message, response_object, status_code)
         except Exception as e:
-            log_into_file({"function": "UserLoginAPI", "exception": str(e)})
+            log_into_file({"function": "UserLoginAPI", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
