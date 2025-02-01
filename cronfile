@@ -1,3 +1,3 @@
 # Run every minute (*/1)
-*/1 * * * * cd /django_backend/base_app/backend_app && /usr/local/bin/python3 manage.py data_generator >> /var/log/cron.log 2>&1
-*/1 * * * * cd /django_backend/base_app/backend_app && /usr/local/bin/python3 manage.py data_validator >> /var/log/cron.log 2>&1
+*/1 * * * * cd /django_backend/base_app/backend_app/management/commands && /usr/local/bin/python3 manage.py data_generator >> /var/log/cron.log 2>&1
+*/1 * * * * cd /django_backend/base_app/backend_app/management/commands && /usr/local/bin/python3 manage.py data_validator >> /var/log/cron.log 2>&1

@@ -72,3 +72,34 @@ class MarkSheet(models.Model):
     class Meta:
         db_table = "mark_sheet"
 
+
+class StudDetails(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
+    city = models.IntegerField(null=True, blank=True)
+
+
+    class Meta:
+        db_table = "stud_details"
+
+
+class Cities(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
+    state_id = models.IntegerField(null=True, blank=True)
+
+
+    class Meta:
+        db_table = "cities"
+
+
+class States(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=50, null=True, blank=True)
+
+    class Meta:
+        db_table = "states"
+
