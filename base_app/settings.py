@@ -81,15 +81,24 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'django_backend',
-        'HOST': 'host.docker.internal', #  127.0.0.1
+        'HOST': '127.0.0.1', #  127.0.0.1  host.docker.internal
         'PORT': '3306',
         'PASSWORD': 'yash',
         'USER': 'root'
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',  # Use the Redis cache backend
+        'LOCATION': 'redis://127.0.0.1:6379/1',  # URL of the Redis server (localhost, port 6379, and database 1)
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+    }
+}
 
-# Password validation
+        # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [

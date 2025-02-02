@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from rest_framework import viewsets
 from utils.loggers import log_into_file
@@ -5,9 +6,13 @@ from utils.security import create_token, validate_token
 from utils.payloads import validate_payloads
 from utils.handle_response import api_response, api_exception
 from rest_framework import status as st
+
+from .management.commands.data_generator import sections
 from .models import UserToken, UserDetails, UserTypes, UserMapping
 from django.db.models import Q
 import traceback
+from .reports import StudentMarksReportCls
+
 
 class BaseAPI(viewsets.ViewSet):
     def list(self, request, *args, **kwargs):
@@ -194,5 +199,51 @@ class UserLoginAPI(viewsets.ViewSet):
             return api_response(status, message, response_object, status_code)
         except Exception as e:
             log_into_file({"function": "UserLoginAPI", "exception": str(e),
+                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
+            return api_exception("fail", "something went wrong", [])
+
+
+class StudentMarks(viewsets.ViewSet):
+    def create(self, request, *args, **kwargs):
+        try:
+            auth_header = request.headers.get('Authorization', None)
+            auth_message, user_info = validate_token(auth_header)
+            if len(auth_message):
+                return api_response('fail', auth_message, [], st.HTTP_403_FORBIDDEN)
+
+            from_date = request.data.get('from_date')
+            to_date = request.data.get('to_date')
+            section = request.data.get('section')
+            city = request.data.get('city')
+            state = request.data.get('state')
+            age = request.data.get('age')
+
+            log_into_file({"function": "StudentMarks", "started": True})
+            student_rep = StudentMarksReportCls(from_date, to_date, section)
+            data = student_rep.get_student_marks(city, state, age)
+            response = []
+            icount = 1
+            for d in data:
+                json_data = json.loads(json.loads(d.get('marks')))
+                response.append({
+                    "key": icount,
+                    "student": d.get('student'),
+                    "section": d.get('section'),
+                    "age": d.get('age'),
+                    "city": d.get('city'),
+                    "state": d.get('state'),
+                    "creation_time": d.get('creation_time').strftime("%d %b %Y %I:%M%p"),
+                    "science": json_data["science"],
+                    "english": json_data["english"],
+                    "history": json_data["history"],
+                    "maths": json_data["maths"]
+
+                })
+                icount += 1
+            log_into_file({"function": "StudentMarks", "completed": True})
+            return api_response('success', '', response, st.HTTP_200_OK)
+
+        except Exception as e:
+            log_into_file({"function": "StudentMarks", "exception": str(e),
                            "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
