@@ -36,86 +36,80 @@ class CreateUpdateUserAPI(viewsets.ViewSet):
             log_into_file({"function": "CreateUpdateUserAPI", "started": True})
             auth_header = request.headers.get('Authorization', None)
             auth_message, user_info = validate_token(auth_header)
-            if len(auth_message):
+            if auth_message:
                 return api_response('fail', auth_message, [], st.HTTP_403_FORBIDDEN)
 
-            name = request.data.get('name', None)
-            mobile_number = request.data.get('mobile_number', None)
-            email = request.data.get('email', None)
+            name = request.data.get('name')
+            mobile_number = request.data.get('mobile_number')
+            email = request.data.get('email')
             gender = request.data.get('gender', 'MALE')
             is_active = request.data.get('is_active', 1)
             is_whatsApp = request.data.get('is_whatsApp', 'Yes')
             user_id = request.data.get('user_id')
             user_type = request.data.get('user_type', 2)
 
-            payloads = validate_payloads({"name": name,
-                                          "mobile_number": mobile_number,
-                                          "email": email})
-            if len(payloads):
-                return api_response('fail', payloads, [], st.HTTP_400_BAD_REQUEST)
+            if not name or not mobile_number or not email:
+                return api_response('fail', "Name, mobile number, and email are required.", [], st.HTTP_400_BAD_REQUEST)
 
-            status = 'fail'
-            status_code = st.HTTP_400_BAD_REQUEST
-            message = 'User is already exists with provided mob no./email.'
-            response_object = []
             if user_id is None:
-                get_user = UserDetails.objects.filter(Q(mobile_number=mobile_number) | Q(email=email)).first()
-                if get_user is None:
-                    log_into_file({"function": "creating user", "started": True})
-                    user = UserDetails(name=name, mobile_number=mobile_number, email=email,
-                                       gender=gender, is_active=is_active, is_whatsApp=is_whatsApp, created_by=user_info.id)
-                    user.save()
-                    log_into_file({"function": "creating user", "completed": True})
+                existing_user = UserDetails.objects.filter(Q(mobile_number=mobile_number) | Q(email=email)).first()
+                if existing_user:
+                    return api_response('fail', "User already exists with provided mobile number or email.", [],
+                                        st.HTTP_400_BAD_REQUEST)
 
-                    log_into_file({"function": "creating token", "started": True})
-                    token = create_token(user)
-                    user_token = UserToken(user_id=user.id, token=token)
-                    user_token.save()
-                    log_into_file({"function": "creating token", "completed": True})
+                # Create user
+                user = UserDetails.objects.create(
+                    name=name,
+                    mobile_number=mobile_number,
+                    email=email,
+                    gender=gender,
+                    is_active=is_active,
+                    is_whatsApp=is_whatsApp,
+                    created_by=user_info.id
+                )
 
-                    log_into_file({"function": "creating user mapping", "started": True})
-                    create_user_type = UserMapping(user_id=user.id, user_type=user_type)
-                    create_user_type.save()
-                    log_into_file({"function": "creating user mapping", "completed": True})
+                token = create_token(user)
+                UserToken.objects.create(user_id=user.id, token=token)
+                UserMapping.objects.create(user_id=user.id, user_type=user_type)
 
-                    status_code = st.HTTP_201_CREATED
-                    status = 'success'
-                    message = 'User created successfully!'
+                return api_response('success', "User created successfully!", [], st.HTTP_201_CREATED)
+
             else:
-                get_user = UserDetails.objects.filter(id=user_id).first()
-                check_user = UserDetails.objects.filter(Q(mobile_number=mobile_number) | Q(email=email)).exclude(id=get_user.id).first()
-                if check_user is None:
-                    if get_user is not None:
-                        get_user.name = name
-                        get_user.email = email
-                        get_user.gender = gender
-                        get_user.is_active = is_active
-                        get_user.is_whatsApp = is_whatsApp
-                        get_user.updated_at = datetime.now()
+                user = UserDetails.objects.filter(id=user_id).first()
+                if not user:
+                    return api_response('fail', "User not found", [], st.HTTP_400_BAD_REQUEST)
 
-                        get_user.save(update_fields=['name', 'email', 'gender', 'is_active', 'is_whatsApp', 'updated_at'])
+                conflict_user = UserDetails.objects.filter(
+                    Q(mobile_number=mobile_number) | Q(email=email)
+                ).exclude(id=user_id).first()
 
-                        get_user_mapping = UserMapping.objects.get(user_id=user_id)
-                        get_user_mapping.user_type = user_type
-                        get_user_mapping.save(update_fields=['user_type'])
+                if conflict_user:
+                    return api_response('fail', "Another user with this mobile number or email already exists.", [],
+                                        st.HTTP_400_BAD_REQUEST)
 
-                        status_code = st.HTTP_200_OK
-                        status = 'success'
-                        message = 'User updated successfully!'
-                    else:
-                        status_code = st.HTTP_400_BAD_REQUEST
-                        message = 'User not found!'
+                user.name = name
+                user.mobile_number = mobile_number
+                user.email = email
+                user.gender = gender
+                user.is_active = is_active
+                user.is_whatsApp = is_whatsApp
+                user.updated_at = datetime.now()
+                user.save(update_fields=['name', 'mobile_number', 'email', 'gender', 'is_active', 'is_whatsApp',
+                                         'updated_at'])
 
-            log_into_file({"function": "CreateUpdateUserAPI", "completed": True})
-            return api_response(status, message, response_object, status_code)
+                UserMapping.objects.update_or_create(
+                    user_id=user.id,
+                    defaults={'user_type': user_type}
+                )
+
+                return api_response('success', "User updated successfully!", [], st.HTTP_200_OK)
 
         except Exception as e:
             log_into_file({"function": "CreateUpdateUserAPI", "exception": str(e),
-                           "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
-            return api_exception("fail", "something went wrong", [])
+                "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
+            return api_exception("fail", "Something went wrong", [])
 
-
-class UserDetailsPI(viewsets.ViewSet):
+class UserDetailsAPI(viewsets.ViewSet):
     def list(self, request, *args, **kwargs):
         try:
             auth_header = request.headers.get('Authorization', None)
@@ -123,7 +117,7 @@ class UserDetailsPI(viewsets.ViewSet):
             if len(auth_message):
                 return api_response('fail', auth_message, [], st.HTTP_403_FORBIDDEN)
 
-            log_into_file({"function": "UserDetailsPI", "started": True})
+            log_into_file({"function": "UserDetailsAPI", "started": True})
             status_code = st.HTTP_200_OK
             response_object = []
             status = "success"
@@ -150,12 +144,12 @@ class UserDetailsPI(viewsets.ViewSet):
                     "user_type": role.user_type
                 })
                 icount += 1
-            log_into_file({"function": "UserDetailsPI", "completed": True})
+            log_into_file({"function": "UserDetailsAPI", "completed": True})
 
             return api_response(status, message, response_object, status_code)
 
         except Exception as e:
-            log_into_file({"function": "UserDetailsPI", "exception": str(e),
+            log_into_file({"function": "UserDetailsAPI", "exception": str(e),
                            "exception_type": type(e).__name__, "exception_at": traceback.format_exc()})
             return api_exception("fail", "something went wrong", [])
 
