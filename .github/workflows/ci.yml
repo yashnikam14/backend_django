@@ -34,5 +34,7 @@ jobs:
           echo "1,Math" >> data_files/sections.csv
 
       - name: Run tests
+        env:
+          DJANGO_SETTINGS_MODULE: backend_app.settings
         run: |
           pytest -v tests/test_backend_app/
