@@ -27,6 +27,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create test CSV files
+        run: |
+          mkdir -p data_files
+          echo "id,name" > data_files/sections.csv
+          echo "1,Math" >> data_files/sections.csv
+
       - name: Run tests
         run: |
           pytest -v tests/test_backend_app/
