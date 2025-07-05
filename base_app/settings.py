@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import sys, os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -72,21 +72,24 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'base_app.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'django_backend',
-        'HOST': '127.0.0.1', #  127.0.0.1  host.docker.internal
-        'PORT': '3306',
-        'PASSWORD': 'yash',
-        'USER': 'root'
+if os.environ.get('TESTING') == '1':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': ':memory:',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'django_backend',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'PASSWORD': 'yash',
+            'USER': 'root',
+        }
+    }
 
 CACHES = {
     'default': {
