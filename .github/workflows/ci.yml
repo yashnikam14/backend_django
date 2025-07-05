@@ -35,6 +35,6 @@ jobs:
 
       - name: Run tests
         env:
-          DJANGO_SETTINGS_MODULE: backend_app.settings
+          DJANGO_SETTINGS_MODULE: base_app.settings
         run: |
           pytest -v tests/test_backend_app/
