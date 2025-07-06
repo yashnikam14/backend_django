@@ -196,7 +196,7 @@ class TestCreateUpdateUserAPI:
         data = {
             "user_id": user2.id,
             "name": "New Name",
-            "mobile_number": "1111111111",  # Conflict with user1
+            "mobile_number": "1111111111",
             "email": "user1@example.com",
         }
 
@@ -235,7 +235,7 @@ class TestCreateUpdateUserAPI:
     def test_create_user_missing_fields(self, mock_validate_token, mock_log, factory, user_info):
         mock_validate_token.return_value = ("", user_info)
 
-        data = {}  # Missing all fields
+        data = {}
 
         request = factory.post('/user-functionality/', data, format='json')
         request.headers = {'Authorization': 'Bearer validtoken'}

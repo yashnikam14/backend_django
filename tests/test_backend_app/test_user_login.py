@@ -109,7 +109,6 @@ class TestUserLoginAPI:
             is_whatsApp="Yes",
             created_by=1
         )
-        # Note: No UserToken or UserMapping created
 
         data = {"username": "2222222222"}
         request = factory.post('/user-login/', data, format='json')
@@ -123,7 +122,6 @@ class TestUserLoginAPI:
 
     @patch('backend_app.views.log_into_file')
     def test_user_login_unexpected_exception(self, mock_log, factory):
-        # Simulate DB error or bad model access
         with patch('backend_app.views.UserDetails.objects.filter') as mock_filter:
             mock_filter.side_effect = Exception("DB error")
 

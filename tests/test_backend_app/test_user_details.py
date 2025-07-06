@@ -107,12 +107,10 @@ class TestUserDetailsAPI:
     def test_list_user_exception_handling(self, mock_validate_token, mock_log, factory, user_info):
         mock_validate_token.return_value = ("", user_info)
 
-        # Simulate error by deleting required UserTypes or UserMapping before use
         user1 = UserDetails.objects.create(
             name="User1", mobile_number="1234567890", email="user1@example.com",
             gender="MALE", is_active=1, is_whatsApp="Yes", created_by=user_info.id
         )
-        # No UserMapping or UserTypes -> will raise DoesNotExist
 
         request = factory.get('/user-list/')
         request.headers = {'Authorization': 'Bearer validtoken'}
